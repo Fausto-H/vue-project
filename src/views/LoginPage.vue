@@ -22,7 +22,47 @@
                         <InputText id="password" v-model="password" type="password" class="input-style" placeholder="Password" />
                     </IconField>
                 </div>
-                <Button label="Sign In" class="signin-button" />
+                <div class="captcha-container">
+                    <div 
+                        @click="!isHcaptchaVerified ? handleCaptchaCheckbox() : null" 
+                        :class="[
+                            'captcha-checkbox', 
+                            isHcaptchaVerified ? 'captcha-verified' : ''
+                        ]"
+                    >
+                        <div class="checkbox-square">
+                            <i 
+                                v-if="isHcaptchaVerified" 
+                                class="pi pi-check checkbox-check"
+                            ></i>
+                        </div>
+                        <span class="checkbox-text">
+                            Não sou um robô
+                        </span>
+                    </div>
+
+                    <!-- hCaptcha invisível -->
+                    <div v-if="showCaptchaCheckbox" class="hidden">
+                        <HCaptcha 
+                            ref="hcaptchaRef" 
+                            :sitekey="hcaptchaSiteKey" 
+                            @verify="onHcaptchaVerify"
+                            @expired="onHcaptchaExpired"
+                            @error="onHcaptchaError"
+                            size="invisible"
+                            theme="dark"
+                        />
+                    </div>
+                </div>
+                <Button 
+                    label="Sign In" 
+                    class="signin-button" 
+                    :disabled="isLoading || !isHcaptchaVerified"
+                    @click="signin"
+                >
+                    <i v-if="isLoading" class="pi pi-spin pi-spinner mr-2"></i>
+                    {{ isLoading ? 'Entrando...' : 'Sign In' }}
+                </Button>
             </div>
             <a href="#" class="forgot-password">Forgot Password?</a>
         </div>
@@ -30,14 +70,84 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import Button from 'primevue/button';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
+import HCaptcha from '@hcaptcha/vue3-hcaptcha';
 
 const username = ref('');
 const password = ref('');
+
+const hcaptchaSiteKey = '10000000-ffff-ffff-ffff-000000000001'; // chave pública de teste
+const hcaptchaToken = ref('');
+const isHcaptchaVerified = ref(false);
+const showCaptchaCheckbox = ref(false);
+const hcaptchaRef = ref(null);
+const isLoading = ref(false);
+
+const handleCaptchaCheckbox = async () => {
+  if (!isHcaptchaVerified.value) {
+    showCaptchaCheckbox.value = false;
+    hcaptchaToken.value = '';
+    
+    await nextTick();
+    
+    showCaptchaCheckbox.value = true;
+    await nextTick();
+    
+    if (hcaptchaRef.value) {
+      try {
+        hcaptchaRef.value.execute();
+        console.log('hCaptcha executado - nova tentativa');
+      } catch (error) {
+        console.error('Erro ao executar hCaptcha:', error);
+        showCaptchaCheckbox.value = false;
+      }
+    }
+  }
+};
+
+const onHcaptchaVerify = (token) => {
+  hcaptchaToken.value = token;
+  isHcaptchaVerified.value = true;
+  showCaptchaCheckbox.value = false;
+  console.log('hCaptcha verificado:', token);
+};
+
+const onHcaptchaExpired = () => {
+  hcaptchaToken.value = '';
+  isHcaptchaVerified.value = false;
+  showCaptchaCheckbox.value = false;
+  console.log('hCaptcha expirou');
+};
+
+const onHcaptchaError = (error) => {
+  hcaptchaToken.value = '';
+  isHcaptchaVerified.value = false;
+  showCaptchaCheckbox.value = false;
+  console.error('Erro hCaptcha:', error);
+};
+
+const signin = () => {
+  if (!isHcaptchaVerified.value) {
+    alert('Por favor, complete a verificação hCaptcha');
+    return;
+  }
+  
+  isLoading.value = true;
+  
+  // Simulação de login
+  setTimeout(() => {
+    console.log('Login realizado com sucesso!', {
+      username: username.value,
+      password: password.value,
+      hcaptchaToken: hcaptchaToken.value
+    });
+    isLoading.value = false;
+  }, 2000);
+};
 </script>
 
 <style scoped>
@@ -190,6 +300,72 @@ const password = ref('');
 
 /* Estilos para placeholders normais */
 
+.captcha-container {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.captcha-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.captcha-checkbox:hover:not(.captcha-verified) {
+  transform: translateY(-1px);
+}
+
+.captcha-checkbox:active:not(.captcha-verified) {
+  transform: translateY(0);
+}
+
+.checkbox-square {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.captcha-verified .checkbox-square {
+  border-color: #24587E;
+}
+
+.checkbox-check {
+  color: #24587E;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.checkbox-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.captcha-verified .checkbox-text {
+  color: #24587E;
+}
+
+.captcha-verified {
+  border-color: #24587E !important;
+  cursor: default;
+}
+
 .signin-button {
   width: 100% !important;
   border-radius: 1.5rem !important;
@@ -200,8 +376,15 @@ const password = ref('');
   font-weight: 500 !important;
 }
 
-.signin-button:hover {
+.signin-button:hover:not(:disabled) {
   background: #193e5a !important;
+}
+
+.signin-button:disabled {
+  background: rgba(35, 87, 126, 0.5) !important;
+  border-color: rgba(35, 87, 126, 0.5) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
 }
 
 .forgot-password {
