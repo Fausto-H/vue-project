@@ -86,3 +86,5 @@ Este projeto é privado e desenvolvido para uso interno.
 ---
 
 Desenvolvido Vue 3 e PrimeVue
+
+<img width="1920" height="1033" alt="image" src="https://github.com/user-attachments/assets/b11cf337-64ef-42f1-8908-d18dd346c1b0" />
