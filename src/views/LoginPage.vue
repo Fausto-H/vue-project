@@ -4,10 +4,10 @@
             <div class="login-header">
                 <img src="/logo-app.png" alt="Logo" class="logo" />
                 <div class="login-title">
-                    <h1 class="title">Welcome</h1>
+                    <h1 class="title">Bem-vindo</h1>
                     <div class="subtitle">
-                        <span>Don't have an account? </span>
-                        <a href="#" class="link">Sign up</a>
+                        <span>Não tem uma conta? </span>
+                        <a href="#" class="link">Cadastre-se</a>
                     </div>
                 </div>
             </div>
@@ -64,18 +64,25 @@
                     {{ isLoading ? 'Entrando...' : 'Sign In' }}
                 </Button>
             </div>
-            <a href="#" class="forgot-password">Forgot Password?</a>
+            <a href="#" class="forgot-password">Esqueci minha senha</a>
         </div>
+        <Toast />
     </div>
 </template>
 
 <script setup>
 import { ref, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
+import Toast from 'primevue/toast';
 import HCaptcha from '@hcaptcha/vue3-hcaptcha';
+
+const router = useRouter();
+const toast = useToast();
 
 const username = ref('');
 const password = ref('');
@@ -113,6 +120,14 @@ const onHcaptchaVerify = (token) => {
   hcaptchaToken.value = token;
   isHcaptchaVerified.value = true;
   showCaptchaCheckbox.value = false;
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Verificação Concluída',
+    detail: 'hCaptcha verificado com sucesso',
+    life: 3000
+  });
+  
   console.log('hCaptcha verificado:', token);
 };
 
@@ -120,6 +135,14 @@ const onHcaptchaExpired = () => {
   hcaptchaToken.value = '';
   isHcaptchaVerified.value = false;
   showCaptchaCheckbox.value = false;
+  
+  toast.add({
+    severity: 'warn',
+    summary: 'Verificação Expirou',
+    detail: 'Por favor, complete a verificação novamente',
+    life: 4000
+  });
+  
   console.log('hCaptcha expirou');
 };
 
@@ -127,26 +150,58 @@ const onHcaptchaError = (error) => {
   hcaptchaToken.value = '';
   isHcaptchaVerified.value = false;
   showCaptchaCheckbox.value = false;
+  
+  toast.add({
+    severity: 'error',
+    summary: 'Erro na Verificação',
+    detail: 'Ocorreu um erro no hCaptcha. Tente novamente.',
+    life: 5000
+  });
+  
   console.error('Erro hCaptcha:', error);
 };
 
 const signin = () => {
   if (!isHcaptchaVerified.value) {
-    alert('Por favor, complete a verificação hCaptcha');
+    toast.add({
+      severity: 'warn',
+      summary: 'Verificação Necessária',
+      detail: 'Por favor, complete a verificação hCaptcha',
+      life: 4000
+    });
     return;
   }
   
   isLoading.value = true;
   
-  // Simulação de login
+  // Simulação de login com usuário mockado
   setTimeout(() => {
-    console.log('Login realizado com sucesso!', {
-      username: username.value,
-      password: password.value,
-      hcaptchaToken: hcaptchaToken.value
-    });
-    isLoading.value = false;
-  }, 2000);
+    // Credenciais mockadas
+    const validUsername = 'root';
+    const validPassword = '123456';
+    
+    if (username.value === validUsername && password.value === validPassword) {
+      toast.add({
+        severity: 'success',
+        summary: 'Login Realizado!',
+        detail: 'Bem-vindo ao sistema',
+        life: 3000
+      });
+      
+      // Pequeno delay antes de redirecionar para mostrar o toast
+      setTimeout(() => {
+        router.push('/home');
+      }, 1000);
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Algo deu errado',
+        detail: 'Usuário ou senha inválidos',
+        life: 5000
+      });
+      isLoading.value = false;
+    }
+  }, 1500);
 };
 </script>
 
@@ -233,6 +288,7 @@ const signin = () => {
 
 .subtitle {
   text-align: center;
+  font-size: small;
 }
 
 .subtitle span {
@@ -246,7 +302,7 @@ const signin = () => {
 }
 
 .link:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(255, 255, 255);
 }
 
 .login-form {
@@ -349,7 +405,7 @@ const signin = () => {
   font-size: 14px;
   font-weight: bold;
 }
-
+.
 .checkbox-text {
   color: rgba(255, 255, 255, 0.8);
   font-size: 14px;
@@ -391,9 +447,10 @@ const signin = () => {
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   text-decoration: none;
+  font-size: small;
 }
 
 .forgot-password:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(255, 255, 255);
 }
 </style>
