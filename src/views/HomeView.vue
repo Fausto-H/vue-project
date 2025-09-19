@@ -10,18 +10,24 @@
       <div class="menu">
         <div class="menu-category">MENU</div>
         <ul class="menu-items">
+        <div class="action-card" @click="router.push('/home')">
           <li class="menu-item active">
             <i class="pi pi-home"></i>
             <span>Home</span>
           </li>
+          </div>
+          <div class="action-card" @click="router.push('/cadastro')">
           <li class="menu-item">
-            <i class="pi pi-users"></i>
-            <span>Usuários</span>
+            <i class="pi pi-users" ></i>
+            <span>Cadastro</span>
           </li>
-          <li class="menu-item">
+          </div>
+          <div class="action-card" @click="router.push('/inventario')">
+           <li class="menu-item">
             <i class="pi pi-chart-bar"></i>
-            <span>Dashboard</span>
+            <span>Inventário</span>
           </li>
+          </div>
           <li class="menu-item">
             <i class="pi pi-cog"></i>
             <span>Configurações</span>
@@ -51,8 +57,7 @@
       </div>
 
       <div class="content">
-        <h1>Bem-vindo ao Dashboard</h1>
-        <!-- Adicione seu conteúdo aqui -->
+        <router-view></router-view>
       </div>
     </div>
   </div>
