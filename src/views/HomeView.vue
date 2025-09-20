@@ -8,29 +8,40 @@
       </div>
 
       <div class="menu">
-        <div class="menu-category">MENU</div>
+        <div class="menu-category">MENU PRINCIPAL</div>
         <ul class="menu-items">
-        <div class="action-card" @click="router.push('/home')">
-          <li class="menu-item active">
+          <li class="menu-item" :class="{ active: isCurrentRoute('/home') }" @click="router.push('/home')">
             <i class="pi pi-home"></i>
-            <span>Home</span>
+            <span>Dashboard</span>
           </li>
-          </div>
-          <div class="action-card" @click="router.push('/cadastro')">
-          <li class="menu-item">
-            <i class="pi pi-users" ></i>
-            <span>Cadastro</span>
+
+          <div class="menu-category">FINANCEIRO</div>
+          
+          <li class="menu-item" :class="{ active: isCurrentRoute('/receitas') }" @click="router.push('/receitas/novo')">
+            <i class="pi pi-arrow-up" style="color: #22C55E"></i>
+            <span>Receitas</span>
           </li>
-          </div>
-          <div class="action-card" @click="router.push('/inventario')">
-           <li class="menu-item">
+          
+          <li class="menu-item" :class="{ active: isCurrentRoute('/despesas') }" @click="router.push('/despesas/novo')">
+            <i class="pi pi-arrow-down" style="color: #EF4444"></i>
+            <span>Despesas</span>
+          </li>
+          
+          <li class="menu-item" :class="{ active: isCurrentRoute('/dividas') }" @click="router.push('/dividas/novo')">
+            <i class="pi pi-clock" style="color: #F59E0B"></i>
+            <span>Dívidas</span>
+          </li>
+
+          <div class="menu-category">RELATÓRIOS</div>
+          
+          <li class="menu-item" :class="{ active: isCurrentRoute('/relatorios/fluxo-caixa') }">
+            <i class="pi pi-chart-line"></i>
+            <span>Fluxo de Caixa</span>
+          </li>
+          
+          <li class="menu-item" :class="{ active: isCurrentRoute('/relatorios/dividas') }">
             <i class="pi pi-chart-bar"></i>
-            <span>Inventário</span>
-          </li>
-          </div>
-          <li class="menu-item">
-            <i class="pi pi-cog"></i>
-            <span>Configurações</span>
+            <span>Análise de Dívidas</span>
           </li>
         </ul>
       </div>
@@ -67,6 +78,10 @@
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+
+const isCurrentRoute = (path) => {
+  return router.currentRoute.value.path.startsWith(path);
+};
 
 const logout = () => {
   router.push('/');
