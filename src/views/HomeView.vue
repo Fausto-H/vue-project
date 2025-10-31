@@ -11,7 +11,7 @@
         <div class="menu-category">MENU</div>
         <ul class="menu-items">
         <div class="action-card" @click="router.push('/home')">
-          <li class="menu-item active">
+          <li class="menu-item">
             <i class="pi pi-home"></i>
             <span>Home</span>
           </li>
