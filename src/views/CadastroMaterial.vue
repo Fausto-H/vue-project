@@ -7,11 +7,6 @@
         <InputText id="nome" class="inputtext" v-model="formData.nome" required />
       </div>
 
-      <div class="form-group">
-        <label for="codigo">Código</label>
-        <InputText id="codigo" class="inputtext" v-model="formData.codigo" required />
-      </div>
-
       <div class="form-row-three">
         <div class="form-group">
           <label for="quantidade">Quantidade</label>
@@ -76,31 +71,36 @@ const categorias = [
 
 const formData = ref({
   nome: '',
-  codigo: '',
   quantidade: null,
   unidade: null,
   categoria: null,
   descricao: '',
 });
 
+const generateCode = () => {
+  const materials = materialsStore.materials;
+  if (materials.length === 0) {
+    return 'MAT001';
+  }
+  
+  const lastCode = materials
+    .map(m => {
+      const num = parseInt(m.codigo.replace(''));
+      return isNaN(num) ? 0 : num;
+    })
+    .sort((a, b) => b - a)[0];
+  
+  const nextNum = lastCode + 1;
+  return `${String(nextNum).padStart(3, '0')}`;
+};
+
 const handleSubmit = async () => {
   loading.value = true;
   try {
-    // Verifica se o código já existe
-    const existingMaterial = materialsStore.getMaterialByCode(formData.value.codigo);
-    if (existingMaterial) {
-      toast.add({
-        severity: 'warn',
-        summary: 'Atenção',
-        detail: 'Já existe um material com este código!',
-        life: 3000
-      });
-      loading.value = false;
-      return;
-    }
+    const codigo = generateCode();
 
     // Valida os campos obrigatórios
-    if (!formData.value.nome || !formData.value.codigo || !formData.value.quantidade || 
+    if (!formData.value.nome || !formData.value.quantidade || 
         !formData.value.unidade || !formData.value.categoria || !formData.value.descricao) {
       toast.add({
         severity: 'warn',
@@ -118,7 +118,7 @@ const handleSubmit = async () => {
     // Adiciona o material usando o store
     materialsStore.addMaterial({
       nome: formData.value.nome,
-      codigo: formData.value.codigo,
+      codigo: codigo,
       quantidade: formData.value.quantidade,
       unidade: formData.value.unidade,
       categoria: formData.value.categoria,
@@ -128,14 +128,13 @@ const handleSubmit = async () => {
     toast.add({
       severity: 'success',
       summary: 'Sucesso',
-      detail: 'Material cadastrado com sucesso!',
+      detail: `Material cadastrado com código ${codigo}!`,
       life: 3000
     });
 
     // Limpa o formulário
     formData.value = {
       nome: '',
-      codigo: '',
       quantidade: null,
       unidade: null,
       categoria: null,
