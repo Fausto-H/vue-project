@@ -38,10 +38,12 @@
         <span>Tem certeza que deseja excluir este material?</span>
       </div>
       <template #footer>
-        <Button label="Não" icon="pi pi-times" class="p-button-text" @click="deleteDialog = false"/>
-        <Button label="Sim" icon="pi pi-check" class="p-button-text" @click="excluirMaterial" />
+        <Button label="Não" icon="pi pi-times" class="p-button-danger" @click="deleteDialog = false"/>
+        <Button label="Sim" icon="pi pi-check" class="p-button-success" @click="excluirMaterial" />
       </template>
     </Dialog>
+
+    <Toast />
   </div>
 </template>
 
@@ -53,44 +55,31 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+import Toast from 'primevue/toast';
+import { useMaterialsStore } from '../stores/materialsStore';
 
 const router = useRouter();
 const toast = useToast();
+const materialsStore = useMaterialsStore();
 const loading = ref(true);
 const deleteDialog = ref(false);
 const materialParaExcluir = ref(null);
 
-// Dados mockados para exemplo
-const materiais = ref([
-  {
-    id: 1,
-    codigo: 'MAT001',
-    nome: 'Chave de Fenda',
-    categoria: 'Ferramentas',
-    quantidade: 50,
-    unidade: 'UN',
-    descricao: 'Chave de fenda Phillips 3/16 x 4'
-  },
-  {
-    id: 2,
-    codigo: 'MAT002',
-    nome: 'Cabo Elétrico',
-    categoria: 'Elétricos',
-    quantidade: 100,
-    unidade: 'M',
-    descricao: 'Cabo flexível 2.5mm'
-  },
-  // Adicione mais itens conforme necessário
-]);
+// Usa os materiais do store
+const materiais = materialsStore.materials;
 
 onMounted(async () => {
-  // Aqui você implementará a lógica de carregar dados do backend
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulando uma requisição
+  await new Promise(resolve => setTimeout(resolve, 500));
   loading.value = false;
 });
 
 const editarMaterial = (material) => {
-  // Implementar lógica de edição
+  toast.add({
+    severity: 'info',
+    summary: 'Em desenvolvimento',
+    detail: 'Funcionalidade de edição será implementada em breve',
+    life: 3000
+  });
   console.log('Editar material:', material);
 };
 
@@ -101,17 +90,25 @@ const confirmarExclusao = (material) => {
 
 const excluirMaterial = async () => {
   try {
-    // Aqui você implementará a lógica de exclusão no backend
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulando uma requisição
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    materiais.value = materiais.value.filter(m => m.id !== materialParaExcluir.value.id);
+    const success = materialsStore.deleteMaterial(materialParaExcluir.value.id);
     
-    toast.add({
-      severity: 'success',
-      summary: 'Sucesso',
-      detail: 'Material excluído com sucesso',
-      life: 3000
-    });
+    if (success) {
+      toast.add({
+        severity: 'success',
+        summary: 'Sucesso',
+        detail: 'Material excluído com sucesso',
+        life: 3000
+      });
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Material não encontrado',
+        life: 3000
+      });
+    }
   } catch (error) {
     toast.add({
       severity: 'error',
@@ -121,6 +118,7 @@ const excluirMaterial = async () => {
     });
   } finally {
     deleteDialog.value = false;
+    materialParaExcluir.value = null;
   }
 };
 </script>

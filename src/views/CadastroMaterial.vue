@@ -4,41 +4,42 @@
     <form @submit.prevent="handleSubmit" class="cadastro-form">
       <div class="form-group">
         <label for="nome">Nome do Material</label>
-        <InputText id="nome" v-model="formData.nome" required />
+        <InputText id="nome" class="inputtext" v-model="formData.nome" required />
       </div>
 
       <div class="form-group">
         <label for="codigo">Código</label>
-        <InputText id="codigo" v-model="formData.codigo" required />
+        <InputText id="codigo" class="inputtext" v-model="formData.codigo" required />
       </div>
 
-      <div class="form-row">
+      <div class="form-row-three">
         <div class="form-group">
           <label for="quantidade">Quantidade</label>
-          <InputNumber id="quantidade" v-model="formData.quantidade" :min="0" required />
+          <InputNumber id="quantidade" class="inputnumber" v-model="formData.quantidade" :min="0" required />
         </div>
 
         <div class="form-group">
           <label for="unidade">Unidade</label>
-          <Dropdown id="unidade" v-model="formData.unidade" :options="unidades" optionLabel="name" optionValue="value" placeholder="Selecione" required />
+          <Dropdown id="unidade" class="w-full" v-model="formData.unidade" :options="unidades" optionLabel="name" optionValue="value" placeholder="Selecione" required />
+        </div>
+
+        <div class="form-group">
+          <label for="categoria">Categoria</label>
+          <Dropdown id="categoria" class="w-full" v-model="formData.categoria" :options="categorias" optionLabel="name" optionValue="value" placeholder="Selecione" required />
         </div>
       </div>
 
       <div class="form-group">
-        <label for="categoria">Categoria</label>
-        <Dropdown id="categoria" v-model="formData.categoria" :options="categorias" optionLabel="name" optionValue="value" placeholder="Selecione" required />
-      </div>
-
-      <div class="form-group">
         <label for="descricao">Descrição</label>
-        <Textarea id="descricao" v-model="formData.descricao" rows="3" required />
+        <Textarea id="descricao" class="w-full" v-model="formData.descricao" rows="3" required />
       </div>
 
       <div class="form-actions">
-        <Button type="button" label="Cancelar" class="p-button-secondary" @click="router.push('/home')" />
-        <Button type="submit" label="Cadastrar" :loading="loading" />
+        <Button type="button" label="Cancelar" class="p-button-secondary button-rounded" @click="router.push('/home')" />
+        <Button type="submit" label="Cadastrar" class="button-rounded" :loading="loading" />
       </div>
     </form>
+    <Toast />
   </div>
 </template>
 
@@ -51,9 +52,12 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
+import Toast from 'primevue/toast';
+import { useMaterialsStore } from '../stores/materialsStore';
 
 const router = useRouter();
 const toast = useToast();
+const materialsStore = useMaterialsStore();
 const loading = ref(false);
 
 const unidades = [
@@ -64,10 +68,10 @@ const unidades = [
 ];
 
 const categorias = [
-  { name: 'Ferramentas', value: 'FERRAMENTAS' },
-  { name: 'Elétricos', value: 'ELETRICOS' },
-  { name: 'Hidráulicos', value: 'HIDRAULICOS' },
-  { name: 'Escritório', value: 'ESCRITORIO' },
+  { name: 'Ferramentas', value: 'Ferramentas' },
+  { name: 'Elétricos', value: 'Elétricos' },
+  { name: 'Hidráulicos', value: 'Hidráulicos' },
+  { name: 'Escritório', value: 'Escritório' },
 ];
 
 const formData = ref({
@@ -82,8 +86,44 @@ const formData = ref({
 const handleSubmit = async () => {
   loading.value = true;
   try {
-    // Aqui você implementará a lógica de salvar no backend
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulando uma requisição
+    // Verifica se o código já existe
+    const existingMaterial = materialsStore.getMaterialByCode(formData.value.codigo);
+    if (existingMaterial) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Já existe um material com este código!',
+        life: 3000
+      });
+      loading.value = false;
+      return;
+    }
+
+    // Valida os campos obrigatórios
+    if (!formData.value.nome || !formData.value.codigo || !formData.value.quantidade || 
+        !formData.value.unidade || !formData.value.categoria || !formData.value.descricao) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Por favor, preencha todos os campos!',
+        life: 3000
+      });
+      loading.value = false;
+      return;
+    }
+
+    // Simula um pequeno delay para melhor UX
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Adiciona o material usando o store
+    materialsStore.addMaterial({
+      nome: formData.value.nome,
+      codigo: formData.value.codigo,
+      quantidade: formData.value.quantidade,
+      unidade: formData.value.unidade,
+      categoria: formData.value.categoria,
+      descricao: formData.value.descricao,
+    });
     
     toast.add({
       severity: 'success',
@@ -92,7 +132,20 @@ const handleSubmit = async () => {
       life: 3000
     });
 
-    router.push('/inventario');
+    // Limpa o formulário
+    formData.value = {
+      nome: '',
+      codigo: '',
+      quantidade: null,
+      unidade: null,
+      categoria: null,
+      descricao: '',
+    };
+
+    // Redireciona para o inventário após um pequeno delay
+    setTimeout(() => {
+      router.push('/inventario');
+    }, 1000);
   } catch (error) {
     toast.add({
       severity: 'error',
@@ -113,6 +166,14 @@ const handleSubmit = async () => {
   margin: 0 auto;
 }
 
+.inputtext {
+  border-radius: 0.5rem;
+}
+
+.inputnumber :deep(.p-inputnumber-input) {
+  border-radius: 0.5rem !important;
+}
+
 .cadastro-form {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 1rem;
@@ -129,6 +190,13 @@ const handleSubmit = async () => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+.form-row-three {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 label {
@@ -161,12 +229,17 @@ label {
   margin-top: 2rem;
 }
 
+.button-rounded {
+  border-radius: 0.5rem !important;
+}
+
 @media (max-width: 768px) {
   .cadastro-container {
     padding: 1rem;
   }
 
-  .form-row {
+  .form-row,
+  .form-row-three {
     grid-template-columns: 1fr;
   }
 }
