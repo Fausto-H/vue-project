@@ -77,26 +77,29 @@ const formData = ref({
   descricao: '',
 });
 
+// Função para gerar código automático
 const generateCode = () => {
   const materials = materialsStore.materials;
   if (materials.length === 0) {
     return 'MAT001';
   }
   
+  // Pega o último número usado
   const lastCode = materials
     .map(m => {
-      const num = parseInt(m.codigo.replace(''));
+      const num = parseInt(m.codigo.replace('MAT', ''));
       return isNaN(num) ? 0 : num;
     })
     .sort((a, b) => b - a)[0];
   
   const nextNum = lastCode + 1;
-  return `${String(nextNum).padStart(3, '0')}`;
+  return `MAT${String(nextNum).padStart(3, '0')}`;
 };
 
 const handleSubmit = async () => {
   loading.value = true;
   try {
+    // Gera o código automaticamente
     const codigo = generateCode();
 
     // Valida os campos obrigatórios
