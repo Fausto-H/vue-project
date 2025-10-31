@@ -74,7 +74,7 @@
           <p>Visualize e gerencie os materiais cadastrados</p>
         </div>
 
-        <div class="action-card" @click="showNotification('Relatórios em desenvolvimento')">
+        <div class="action-card" @click="generatePDF">
           <div class="action-icon">
             <i class="pi pi-file-pdf"></i>
           </div>
@@ -126,6 +126,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMaterialsStore } from '../stores/materialsStore';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const router = useRouter();
 const materialsStore = useMaterialsStore();
@@ -151,6 +153,92 @@ const formatDate = () => {
 
 const showNotification = (message) => {
   alert(message);
+};
+
+const generatePDF = () => {
+  console.log('Gerando PDF...', materialsStore.materials);
+  
+  try {
+    const doc = new jsPDF();
+    
+    // Configurações
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Título
+    doc.setFontSize(18);
+    doc.text('Relatorio de Materiais', pageWidth / 2, 20, { align: 'center' });
+    
+    // Data de geração
+    doc.setFontSize(10);
+    const hoje = new Date().toLocaleDateString('pt-BR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    doc.text(`Gerado em: ${hoje}`, pageWidth / 2, 28, { align: 'center' });
+  
+    // Resumo
+    doc.setFontSize(11);
+    doc.text('Resumo:', 14, 38);
+    
+    doc.setFontSize(10);
+    doc.text(`Total de Materiais: ${materialsStore.totalMaterials}`, 14, 44);
+    doc.text(`Estoque Baixo: ${materialsStore.lowStockMaterials}`, 14, 50);
+    doc.text(`Estoque OK: ${materialsStore.okStockMaterials}`, 14, 56);
+    
+    // Tabela de materiais
+    const tableData = materialsStore.materials.map(material => [
+      material.codigo,
+      material.nome,
+      material.categoria,
+      `${material.quantidade} ${material.unidade}`,
+      material.descricao
+    ]);
+    
+    autoTable(doc, {
+      startY: 65,
+      head: [['Codigo', 'Nome', 'Categoria', 'Quantidade', 'Descricao']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [35, 87, 126],
+        textColor: 255,
+        fontSize: 10
+      },
+      bodyStyles: {
+        fontSize: 9
+      },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 'auto' }
+      },
+      margin: { top: 65 },
+      didDrawPage: (data) => {
+        // Rodapé
+        doc.setFontSize(8);
+        doc.setTextColor(128);
+        doc.text(
+          `Pagina ${doc.internal.getNumberOfPages()}`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: 'center' }
+        );
+      }
+    });
+    
+    // Salva o PDF
+    doc.save(`relatorio-materiais-${new Date().getTime()}.pdf`);
+    console.log('PDF gerado com sucesso!');
+    
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    alert('Erro ao gerar PDF: ' + error.message);
+  }
 };
 
 onMounted(() => {
