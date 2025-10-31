@@ -32,6 +32,60 @@
       </Column>
     </DataTable>
 
+    <Dialog v-model:visible="editDialog" :style="{width: '600px'}" header="Editar Material" :modal="true">
+      <div class="edit-form">
+        <div class="form-group">
+          <label>Código</label>
+          <input type="text" v-model="materialEditando.codigo" disabled class="form-input disabled" />
+        </div>
+        
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" v-model="materialEditando.nome" class="form-input" placeholder="Nome do material" />
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoria *</label>
+            <select v-model="materialEditando.categoria" class="form-input">
+              <option value="">Selecione...</option>
+              <option value="Eletrônicos">Eletrônicos</option>
+              <option value="Ferramentas">Ferramentas</option>
+              <option value="Material de Escritório">Material de Escritório</option>
+              <option value="Limpeza">Limpeza</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Quantidade *</label>
+            <input type="number" v-model="materialEditando.quantidade" class="form-input" min="0" />
+          </div>
+          
+          <div class="form-group">
+            <label>Unidade *</label>
+            <select v-model="materialEditando.unidade" class="form-input">
+              <option value="">Selecione...</option>
+              <option value="un">Unidade</option>
+              <option value="kg">Quilograma</option>
+              <option value="m">Metro</option>
+              <option value="l">Litro</option>
+              <option value="cx">Caixa</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Descrição</label>
+          <textarea v-model="materialEditando.descricao" class="form-input" rows="3" placeholder="Descrição do material"></textarea>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="editDialog = false"/>
+        <Button label="Salvar" icon="pi pi-check" @click="salvarEdicao" />
+      </template>
+    </Dialog>
+
     <Dialog v-model:visible="deleteDialog" :style="{width: '450px'}" header="Confirmar" :modal="true">
       <div class="confirmation-content">
         <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
@@ -62,8 +116,18 @@ const router = useRouter();
 const toast = useToast();
 const materialsStore = useMaterialsStore();
 const loading = ref(true);
+const editDialog = ref(false);
 const deleteDialog = ref(false);
 const materialParaExcluir = ref(null);
+const materialEditando = ref({
+  id: null,
+  codigo: '',
+  nome: '',
+  categoria: '',
+  quantidade: 0,
+  unidade: '',
+  descricao: ''
+});
 
 // Usa os materiais do store
 const materiais = materialsStore.materials;
@@ -74,13 +138,52 @@ onMounted(async () => {
 });
 
 const editarMaterial = (material) => {
-  toast.add({
-    severity: 'info',
-    summary: 'Em desenvolvimento',
-    detail: 'Funcionalidade de edição será implementada em breve',
-    life: 3000
-  });
-  console.log('Editar material:', material);
+  materialEditando.value = { ...material };
+  editDialog.value = true;
+};
+
+const salvarEdicao = async () => {
+  // Validação
+  if (!materialEditando.value.nome || !materialEditando.value.categoria || 
+      !materialEditando.value.quantidade || !materialEditando.value.unidade) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Atenção',
+      detail: 'Preencha todos os campos obrigatórios',
+      life: 3000
+    });
+    return;
+  }
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const success = materialsStore.updateMaterial(materialEditando.value.id, materialEditando.value);
+    
+    if (success) {
+      toast.add({
+        severity: 'success',
+        summary: 'Sucesso',
+        detail: 'Material atualizado com sucesso',
+        life: 3000
+      });
+      editDialog.value = false;
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Material não encontrado',
+        life: 3000
+      });
+    }
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erro',
+      detail: 'Erro ao atualizar material',
+      life: 3000
+    });
+  }
 };
 
 const confirmarExclusao = (material) => {
@@ -190,6 +293,71 @@ const excluirMaterial = async () => {
   padding: 1rem;
 }
 
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #1a1f2d;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.form-input {
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #1a1f2d;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: #ffffff;
+}
+
+.form-input.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f5f5f5;
+  color: #666666;
+}
+
+.form-input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+textarea.form-input {
+  resize: vertical;
+  font-family: inherit;
+}
+
+select.form-input {
+  cursor: pointer;
+}
+
+select.form-input option {
+  background: #1a1f2d;
+  color: white;
+}
+
 @media (max-width: 768px) {
   .inventario-container {
     padding: 1rem;
@@ -199,6 +367,10 @@ const excluirMaterial = async () => {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>
